@@ -12,18 +12,18 @@ app.use(cors(
     },
 ));
 
-//configurations to get ready for the data interchange
+//----> configurations to get ready for the data interchange
 
 app.use(express.json({limit:"16kb"}));
 app.use(express.urlencoded({extended: true, limit: "16kb" }));
 app.use(express.static("public"))
 app.use(cookieParser())
 
-// Routes import 
+// ----> Routes import 
 import userRouter from './routes/user.routes.js'
 
 
-// Routes Declaration
+// -----> Routes Declaration
 app.use("/api/v1/users",userRouter)
 
 
