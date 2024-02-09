@@ -6,6 +6,31 @@ import { ApiResponse } from '../utils/ApiResponse.js'
 import jwt from 'jsonwebtoken'
 
 
+// ------> generating access and refresh tokens
+
+const generateAccessAndRefreshTokens = async(userId) => {
+    try {
+        const user = await User.findById(userId)
+        //console.log("user ->",user);
+
+        //console.log("secret key -> ",process.env.ACCESS_TOKEN_SECRET);
+        const accessToken = user.generateAccessToken()
+        //console.log("accessToken ->",accessToken);
+
+        const refreshToken = user.generateRefreshToken()
+        //console.log("refreshToken -->",refreshToken);
+
+        user.refreshToken = refreshToken
+
+        await user.save({ validateBeforeSave: false })
+        
+        return {accessToken,refreshToken}
+
+    } catch (error) {
+        throw new ApiError(500 , error.message)
+    }
+} 
+
 
 
 const registerUser = asyncHandler( async (req,res) => {
@@ -133,7 +158,6 @@ const registerUser = asyncHandler( async (req,res) => {
 
 const loginUser  = asyncHandler ( async(req,res) =>{
 
-
     
      
     // TODO for login user 
@@ -184,30 +208,6 @@ const loginUser  = asyncHandler ( async(req,res) =>{
 
     // -------> if passwords present give the user his access and refresh tokens
 
-    // ------> generating access and refresh tokens
-
-    const generateAccessAndRefreshTokens = async(userId) => {
-        try {
-            const user = await User.findById(userId)
-            //console.log("user ->",user);
-
-            //console.log("secret key -> ",process.env.ACCESS_TOKEN_SECRET);
-            const accessToken = user.generateAccessToken(process.env.ACCESS_TOKEN_SECRET)
-            //console.log("accessToken ->",accessToken);
-
-            const refreshToken = user.generateRefreshToken(process.env.REFRESH_TOKEN_SECRET)
-            //console.log("refreshToken -->",refreshToken);
-
-            user.refreshToken = refreshToken
-
-            await user.save({ validateBeforeSave: false })
-            
-            return {accessToken,refreshToken}
-    
-        } catch (error) {
-            throw new ApiError(500 , error.message)
-        }
-    } 
 
     const {accessToken,refreshToken} = await generateAccessAndRefreshTokens(user._id)
 
@@ -271,8 +271,59 @@ const logoutUser = asyncHandler( async( req,res )=> {
     
 })
 
+
+const refreshAccessToken = asyncHandler( async(req,res)=>{
+     
+    const incomingRefreshToken = req.cookies.refreshToken || req.body.refreshToken
+
+    if(!incomingRefreshToken){
+        throw new ApiError(401," Unauthorized Request ")
+    }
+
+    try {
+            const decodedToken = jwt.verify(
+            incomingRefreshToken,
+            process.env.REFRESH_TOKEN_SECRET
+            )
+    
+        const user = await User.findById(decodedToken?._id)
+    
+        if(!user){
+            throw new ApiError(401, " Invalid Refresh Token")
+        }
+    
+        if(incomingRefreshToken !== user?.refreshToken){
+            throw new ApiError(401," Refresh token is expired or Used ")
+        }
+    
+        const options = {
+            httpOnly: true,
+            secure: true,
+        }
+    
+        const {newRefreshToken , newAccessToken} = await generateAccessAndRefreshTokens(user?._id)
+    
+        return res.status(200)
+        .cookie("accessToken",newAccessToken, options)
+        .cookie("refreshToken",newRefreshToken , options)
+        .json(
+            new ApiResponse(
+                200,
+                {newAccessToken , newRefreshToken},
+                "Access token Refreshed"
+            )
+        )
+    } catch (error) {
+        throw new ApiError(401,err?.message || " Invalid Refresh Token ")
+        
+    }
+
+})
+
+
 export {
     registerUser,
     loginUser,
     logoutUser,
+    refreshAccessToken,
 }
