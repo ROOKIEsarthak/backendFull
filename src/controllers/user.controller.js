@@ -3,6 +3,8 @@ import { ApiError } from '../utils/ApiError.js'
 import { User } from '../models/user.model.js'
 import { uploadOnCloudinary } from '../utils/cloudinary.js'
 import { ApiResponse } from '../utils/ApiResponse.js'
+import jwt from 'jsonwebtoken'
+
 
 
 
@@ -130,13 +132,16 @@ const registerUser = asyncHandler( async (req,res) => {
 
 
 const loginUser  = asyncHandler ( async(req,res) =>{
+
+
+    
      
     // TODO for login user 
 
     // -----> get data from req.body 
 
     const { email , username , password } = req.body;
-    console.log(email);
+    //console.log(email);
 
     // ------> check if username or email is present or not in order to login
 
@@ -179,18 +184,28 @@ const loginUser  = asyncHandler ( async(req,res) =>{
 
     // -------> if passwords present give the user his access and refresh tokens
 
+    // ------> generating access and refresh tokens
+
     const generateAccessAndRefreshTokens = async(userId) => {
         try {
             const user = await User.findById(userId)
-            const accessToken = user.generateAccessToken()
-            const refreshToken = user.generateRefreshToken()
+            //console.log("user ->",user);
+
+            //console.log("secret key -> ",process.env.ACCESS_TOKEN_SECRET);
+            const accessToken = user.generateAccessToken(process.env.ACCESS_TOKEN_SECRET)
+            //console.log("accessToken ->",accessToken);
+
+            const refreshToken = user.generateRefreshToken(process.env.REFRESH_TOKEN_SECRET)
+            //console.log("refreshToken -->",refreshToken);
+
             user.refreshToken = refreshToken
+
             await user.save({ validateBeforeSave: false })
-    
+            
             return {accessToken,refreshToken}
     
         } catch (error) {
-            throw new ApiError(500 , "Something went wrong while generating refresh and access token")
+            throw new ApiError(500 , error.message)
         }
     } 
 
@@ -199,6 +214,7 @@ const loginUser  = asyncHandler ( async(req,res) =>{
     const loggedInUser = await User.findById(user._id).
     select("-password -refreshToken")
 
+    //console.log(loggedInUser);
 
 
     // --------->  send these tokens using secure cookie
@@ -221,7 +237,7 @@ const loginUser  = asyncHandler ( async(req,res) =>{
                 {
                     user: " Logged in User",
                     accessToken,
-                    refreshToken,
+                    refreshToken,                    
                 },
                 "User Logged in Successfully"
             )
