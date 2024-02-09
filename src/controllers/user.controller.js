@@ -140,7 +140,7 @@ const loginUser  = asyncHandler ( async(req,res) =>{
 
     // ------> check if username or email is present or not in order to login
 
-    if(!username && !email){
+    if(!(username || email)){
         throw new ApiError(400," username or email is required")
     }
 
@@ -235,7 +235,6 @@ const logoutUser = asyncHandler( async( req,res )=> {
             $set:{
                 refreshToken: undefined
             }
-
         },
         {
             new: true
