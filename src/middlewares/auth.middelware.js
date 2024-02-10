@@ -6,9 +6,9 @@ import { User } from "../models/user.model.js";
 
 export const verifyJWT = asyncHandler( async( req, _, next ) => {
 
-   
 
     try {
+        //console.log("cookies->",req.cookies);
         const token = req.cookies?.accessToken || req.header("Authorization")?.replace("Bearer ","")
     
         if(!token){
@@ -16,6 +16,7 @@ export const verifyJWT = asyncHandler( async( req, _, next ) => {
         }
         
         const decodedToken = jwt.verify(token, process.env.ACCESS_TOKEN_SECRET)
+        //console.log("decodedToken -> ",decodedToken);
     
         const user = await User.findById(decodedToken?._id).select("-password -refreshToken")
     
@@ -23,8 +24,10 @@ export const verifyJWT = asyncHandler( async( req, _, next ) => {
             // NEXT_VIDEO : discuss about frontend
             throw new ApiError(401,"Invalid Access Token")
         }
-    
+
+        // console.log("user ---->" , user);
         req.user = user;
+        //console.log("req.user -----> ",req.user);
         next()
     
     } catch (error) {

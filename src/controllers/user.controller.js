@@ -41,8 +41,8 @@ const registerUser = asyncHandler( async (req,res) => {
 
     const {fullName , email , username , password } = req.body 
     console.log("req.body -> ",req.body);
-    console.log("email : ", email);
-
+    console.log("req.body ->",req.body.email);
+    
 
 
 
@@ -65,7 +65,7 @@ const registerUser = asyncHandler( async (req,res) => {
 
 
 
-    // -----> check if teh user already exists : username and email both
+    // -----> check if the user already exists : username and email both
 
 
     // this is the other way of validation/checking using 
@@ -91,7 +91,7 @@ const registerUser = asyncHandler( async (req,res) => {
 
 
     //const coverImageLocalPath = req.files?.coverImage[0]?.path;
-     let coverImageLocalPath;
+    let coverImageLocalPath;
     if(req.files && Array.isArray(req.files.coverImage) && req.files.coverImage.length > 0){
          coverImageLocalPath = req.files.coverImage[0].path
     }
@@ -165,7 +165,7 @@ const loginUser  = asyncHandler ( async(req,res) =>{
     // -----> get data from req.body 
 
     const { email , username , password } = req.body;
-    //console.log(email);
+    console.log(req.body.email);
 
     // ------> check if username or email is present or not in order to login
 
@@ -211,10 +211,12 @@ const loginUser  = asyncHandler ( async(req,res) =>{
 
     const {accessToken,refreshToken} = await generateAccessAndRefreshTokens(user._id)
 
+    console.log({accessToken,refreshToken});
+
     const loggedInUser = await User.findById(user._id).
     select("-password -refreshToken")
 
-    //console.log(loggedInUser);
+    console.log(loggedInUser);
 
 
     // --------->  send these tokens using secure cookie
@@ -302,7 +304,11 @@ const refreshAccessToken = asyncHandler( async(req,res)=>{
         }
     
         const {newRefreshToken , newAccessToken} = await generateAccessAndRefreshTokens(user?._id)
-    
+        
+        console.log("new access token -> ",req.newAccessToken);
+        console.log("new refresh token -> ",req.newRefreshToken);
+        
+        
         return res.status(200)
         .cookie("accessToken",newAccessToken, options)
         .cookie("refreshToken",newRefreshToken , options)
