@@ -378,7 +378,7 @@ const getCurrentUser = asyncHandler(async(req,res)=>{
 
     return res
     .status(200)
-    .json(200 , req.user , " Current user fetched successfully " )
+    .json(new ApiResponse(200 , req.user , " Current user fetched successfully " ))
 
 
 })
@@ -418,6 +418,8 @@ const updateUserAvatar = asyncHandler(async(req,res)=>{
     {
         throw new ApiError(400 , " Avatar file is missing")
     }
+
+    //TODO : delete old image - you have to create a new utility function and give avatar url back to it 
 
     const avatar = await uploadOnCloudinary(avatarLocalPath)
 

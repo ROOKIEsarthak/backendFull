@@ -1,3 +1,10 @@
+// ----------> THIS IS THE SERVER FILE . HERE ALL THE CONFIGURATION FOR THE SERVER IS DONE
+
+
+
+
+
+
 //require('dotenv').config({path:'./env'})
 import dotenv from 'dotenv'
 const port = process.env.PORT || 8000
